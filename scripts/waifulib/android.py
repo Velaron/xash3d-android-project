@@ -151,9 +151,14 @@ class aaptpackage(javaw.JTask):
 		if not self.inputs:
 			root   = self.generator.outdir.ctx.root
 			resdir = root.make_node(self.env.RESDIR)
-			self.inputs = resdir.ant_glob('**/*', quiet=True) + [root.make_node(self.env.MANIFEST)] + [self.generator.outdir.make_node('classes.dex')]
+			self.inputs = resdir.ant_glob('**/*', quiet=True) + [root.make_node(self.env.MANIFEST)]
 
 		return super(aaptpackage, self).runnable_status()
+
+class aaptadd(Task.Task):
+	color = 'GREEN' # androis green :)
+	run_str = '${AAPT} a ${TGT} ${SRC}'
+	vars = ['AAPT']
 
 class DexerTask(javaw.JTask): # base dexer
 	color = 'GREEN'
@@ -292,6 +297,12 @@ def apply_d8(self):
 		tgt=self.outdir.make_node('classes.dex'),
 		cwd=self.outdir)
 	self.d8_task.set_run_after(self.javac_task) # we don't know javac outputs
+
+	self.aaptadd_task = self.create_task('apptadd',
+		src=self.outdir.make_node('classes.dex'),
+		tgt=self.outdir.make_node(self.env.OUTAPK_UNALIGNED_NOCLASSES_NOJNI),
+		cwd=self.outdir)
+	self.aaptadd_task.set_run_after(self.d8_task)
 
 	if self.env.JNIDIR:
 		self.apkjni_task = self.create_task('apkjni',
